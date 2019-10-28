@@ -1,0 +1,44 @@
+#### Creating base image
+
+FROM debian:latest
+
+
+RUN apt-get update
+RUN apt-get check
+RUN apt-get dist-upgrade -y
+RUN apt-get install -y openjdk-8-jdk
+RUN apt-get install -y wget
+
+RUN apt-get install -y gnupg2
+RUN wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
+RUN mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
+RUN wget -q https://packages.microsoft.com/config/debian/9/prod.list
+RUN mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
+RUN chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
+RUN chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+RUN apt-get install -y apt-transport-https
+RUN apt-get update
+RUN apt-get install -y dotnet-sdk-2.2
+EXPOSE 8080
+COPY /target/NetApplicationsDemo-0.0.1-SNAPSHOT.jar /app.jar
+ENTRYPOINT ["java","-jar","/app.jar"] 
+
+
+##creating docker file for java application
+FROM openjdk-8-jdk
+COPY  /target/DockerImages-0.0.1-SNAPSHOT.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","DockerImages-0.0.1-SNAPSHOT.jar"]
+
+##creating docker file for .NET application
+FROM mcr.microsoft.com/dotnet/core/sdk:2.2
+COPY /bin/Release/netcoreapp2.2/ app/
+USER root
+RUN useradd netcore-api
+RUN chown -R netcore-api /app
+USER netcore-api
+ENV ASPNETCORE_URLS http://*:80
+#ENV ASPNETCORE_ENVIRONMENT $ASPNET_ENV
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENTRYPOINT ["dotnet", "app/<<APP_NAME>>"]
+EXPOSE 80
