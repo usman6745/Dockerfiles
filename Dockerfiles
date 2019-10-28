@@ -42,3 +42,73 @@ ENV ASPNETCORE_URLS http://*:80
 ENV DOTNET_USE_POLLING_FILE_WATCHER=true
 ENTRYPOINT ["dotnet", "app/<<APP_NAME>>"]
 EXPOSE 80
+
+
+//Kubernetes set up
+
+
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-deployment
+  labels:
+    app: java
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: java
+  template:
+    metadata:
+      labels:
+        app: java
+    spec:
+      containers:
+      - name: java
+        image: avinash4107/kubernetesdemo:0.1
+        ports:
+        - containerPort: 5000
+        
+        ##service yml
+        
+        apiVersion: v1
+kind: Service
+metadata:
+        name: kube-demo
+        labels:
+                app:java
+
+spec:
+        ports:
+                - port: 9090
+                  targetPort: 9090
+        selector:
+                app: java
+                
+                //kubernetes yml
+                apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploymentdemo
+  labels:
+    app: deploymentapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: deploymentapp
+  template:
+    metadata:
+      name: deploymentpod
+      labels:
+        app: deploymentapp
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
